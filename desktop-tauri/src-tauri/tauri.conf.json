@@ -1,12 +1,22 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Aurora IPTV",
-  "version": "0.1.0",
-  "identifier": "com.kingpickz.aurora",
+  "productName": "KINGZ IPTV",
+  "version": "1.0.0",
+  "identifier": "com.kingz.iptv",
   "build": { "frontendDist": "../" },
   "app": {
-    "windows": [{ "title": "Aurora IPTV", "width": 1280, "height": 800, "resizable": true }],
+    "windows": [{ "title": "KINGZ IPTV", "width": 1280, "height": 800, "resizable": true }],
     "security": { "csp": null }
   },
-  "bundle": { "active": true, "targets": "all", "icon": ["icons/icon.png"] }
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
 }

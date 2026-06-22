@@ -1,5 +1,13 @@
 name: Build Desktop (Tauri)
-on: [workflow_dispatch, push]
+# Builds Windows .msi/.exe, macOS .dmg, Linux .AppImage/.deb and publishes them to the v1.0.0 Release.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'desktop-tauri/**'
+      - '.github/workflows/build-desktop.yml'
+permissions:
+  contents: write
 jobs:
   build:
     strategy:
@@ -16,13 +24,23 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev patchelf
       - name: Build installers
+        working-directory: desktop-tauri
         run: |
-          cd desktop-tauri
           npm install
-          npx tauri icon https://kingpickz.com/iptv/icon.svg || true
+          npx tauri icon app-icon.png
           npx tauri build
-      - uses: actions/upload-artifact@v4
+      - name: Collect bundles
+        shell: bash
+        run: |
+          mkdir -p dist
+          find desktop-tauri/src-tauri/target/release/bundle -type f \
+            \( -name '*.msi' -o -name '*.exe' -o -name '*.dmg' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' \) \
+            -exec cp {} dist/ \; || true
+          ls -la dist || true
+      - name: Publish to Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: aurora-desktop-${{ matrix.os }}
-          path: |
-            desktop-tauri/src-tauri/target/release/bundle/**/*
+          tag_name: v1.0.0
+          name: KINGZ IPTV
+          files: dist/*
+          fail_on_unmatched_files: false
