@@ -1,0 +1,36 @@
+name: Build Android APK
+# Builds a sideloadable, debug-signed APK from the WebView shell and publishes it to the v1.0.0 Release,
+# so https://kingpickz.com/apk (the AFTVnews "Downloader" URL) resolves to it.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'androidapp/**'
+      - '.github/workflows/build-apk.yml'
+permissions:
+  contents: write
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Build debug APK
+        working-directory: androidapp
+        run: |
+          gradle wrapper --gradle-version 8.7
+          ./gradlew assembleDebug --no-daemon --stacktrace
+      - name: Stage APK
+        run: cp androidapp/app/build/outputs/apk/debug/app-debug.apk kingz-iptv.apk
+      - name: Publish to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: KINGZ IPTV
+          body: "Sideloadable KINGZ IPTV app. Fire TV / Android TV: open the Downloader app and enter kingpickz.com/apk"
+          files: kingz-iptv.apk
+          fail_on_unmatched_files: false
