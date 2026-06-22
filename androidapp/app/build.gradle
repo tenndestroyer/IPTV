@@ -14,9 +14,26 @@ android {
         versionName "1.0.0"
     }
 
+    // Release signing — only engages when a keystore is provided via env (CI secrets). Otherwise CI builds
+    // a debug-signed (sideloadable) APK. See SIGNING.md.
+    signingConfigs {
+        release {
+            def ksFile = System.getenv("ANDROID_KEYSTORE_FILE")
+            if (ksFile) {
+                storeFile file(ksFile)
+                storePassword System.getenv("STORE_PASS")
+                keyAlias System.getenv("KEY_ALIAS")
+                keyPassword System.getenv("KEY_PASS")
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
+            if (System.getenv("ANDROID_KEYSTORE_FILE")) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 

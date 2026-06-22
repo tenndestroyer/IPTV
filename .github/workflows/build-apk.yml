@@ -1,6 +1,6 @@
 name: Build Android APK
-# Builds a sideloadable, debug-signed APK from the WebView shell and publishes it to the v1.0.0 Release,
-# so https://kingpickz.com/apk (the AFTVnews "Downloader" URL) resolves to it.
+# Builds the KINGZ APK and publishes it to the v1.0.0 Release (→ kingpickz.com/apk for the Downloader app).
+# Auto release-signs when keystore secrets are present (see SIGNING.md); otherwise a debug-signed, sideloadable APK.
 on:
   workflow_dispatch:
   push:
@@ -19,21 +19,32 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
-      - name: Fetch Gradle 8.7
+      - name: Build APK
+        working-directory: androidapp
+        env:
+          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          STORE_PASS: ${{ secrets.ANDROID_STORE_PASS }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASS }}
         run: |
           curl -sL -o "$HOME/gradle.zip" https://services.gradle.org/distributions/gradle-8.7-bin.zip
           unzip -q "$HOME/gradle.zip" -d "$HOME"
-          "$HOME/gradle-8.7/bin/gradle" --version
-      - name: Build debug APK
-        working-directory: androidapp
-        run: "$HOME/gradle-8.7/bin/gradle assembleDebug --no-daemon --stacktrace"
-      - name: Stage APK
-        run: cp androidapp/app/build/outputs/apk/debug/app-debug.apk kingz-iptv.apk
+          GRADLE="$HOME/gradle-8.7/bin/gradle"
+          if [ -n "$ANDROID_KEYSTORE_B64" ]; then
+            echo "Release-signing with provided keystore"
+            echo "$ANDROID_KEYSTORE_B64" | base64 -d > "$HOME/release.keystore"
+            export ANDROID_KEYSTORE_FILE="$HOME/release.keystore"
+            "$GRADLE" assembleRelease --no-daemon --stacktrace
+            cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/kingz-iptv.apk"
+          else
+            echo "No keystore secret → debug-signed (sideloadable) APK"
+            "$GRADLE" assembleDebug --no-daemon --stacktrace
+            cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/kingz-iptv.apk"
+          fi
       - name: Publish to Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.0
           name: KINGZ IPTV
-          body: "Sideloadable KINGZ IPTV app. Fire TV / Android TV: open the Downloader app and enter kingpickz.com/apk"
           files: kingz-iptv.apk
           fail_on_unmatched_files: false

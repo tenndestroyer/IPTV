@@ -12,8 +12,9 @@
         android:allowBackup="true"
         android:label="KINGZ IPTV"
         android:hardwareAccelerated="true"
-        android:icon="@android:drawable/sym_def_app_icon"
-        android:banner="@android:drawable/sym_def_app_icon"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:banner="@drawable/banner"
         android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
 
         <activity
