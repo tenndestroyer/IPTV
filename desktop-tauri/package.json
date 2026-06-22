@@ -1,6 +1,0 @@
-{
-  "name": "aurora-desktop",
-  "version": "0.1.0",
-  "scripts": { "tauri": "tauri", "build": "tauri build", "dev": "tauri dev" },
-  "devDependencies": { "@tauri-apps/cli": "^2.0.0" }
-}

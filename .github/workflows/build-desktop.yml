@@ -1,5 +1,6 @@
 name: Build Desktop
-# Electron wrapper of the KINGZ web app → Windows .exe, macOS .dmg, Linux .AppImage, published to the v1.0.0 Release.
+# Electron wrapper → Windows .exe, macOS .dmg (x64 + arm64), Linux .AppImage, published to the v1.0.0 Release.
+# Auto code-signs / notarizes when cert secrets are present (see SIGNING.md); unsigned (sideload) otherwise.
 on:
   workflow_dispatch:
   push:
@@ -22,10 +23,23 @@ jobs:
           node-version: 20
       - name: Build installer
         working-directory: desktop-electron
+        shell: bash
         env:
-          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          # macOS signing + notarization (set these repo secrets to enable):
+          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Windows signing:
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
         run: |
           npm install
+          # Don't let the macOS cert env leak into the Windows job.
+          if [ "$RUNNER_OS" = "Windows" ]; then unset CSC_LINK CSC_KEY_PASSWORD; fi
+          # On macOS with no cert, disable signing so the build still produces an (unsigned) dmg.
+          if [ "$RUNNER_OS" = "macOS" ] && [ -z "$CSC_LINK" ]; then export CSC_IDENTITY_AUTO_DISCOVERY=false; fi
           npx electron-builder --publish never
       - name: Collect installers
         shell: bash
