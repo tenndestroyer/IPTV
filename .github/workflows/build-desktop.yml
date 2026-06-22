@@ -1,10 +1,10 @@
-name: Build Desktop (Tauri)
-# Builds Windows .msi/.exe, macOS .dmg, Linux .AppImage/.deb and publishes them to the v1.0.0 Release.
+name: Build Desktop
+# Electron wrapper of the KINGZ web app → Windows .exe, macOS .dmg, Linux .AppImage, published to the v1.0.0 Release.
 on:
   workflow_dispatch:
   push:
     paths:
-      - 'desktop-tauri/**'
+      - 'desktop-electron/**'
       - '.github/workflows/build-desktop.yml'
 permissions:
   contents: write
@@ -18,23 +18,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20 }
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Linux deps
-        if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev patchelf
-      - name: Build installers
-        working-directory: desktop-tauri
+        with:
+          node-version: 20
+      - name: Build installer
+        working-directory: desktop-electron
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
         run: |
           npm install
-          npx tauri icon app-icon.png
-          npx tauri build
-      - name: Collect bundles
+          npx electron-builder --publish never
+      - name: Collect installers
         shell: bash
         run: |
           mkdir -p dist
-          find desktop-tauri/src-tauri/target/release/bundle -type f \
-            \( -name '*.msi' -o -name '*.exe' -o -name '*.dmg' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' \) \
+          find desktop-electron/dist -maxdepth 1 -type f \
+            \( -name '*.exe' -o -name '*.dmg' -o -name '*.AppImage' \) \
             -exec cp {} dist/ \; || true
           ls -la dist || true
       - name: Publish to Release
