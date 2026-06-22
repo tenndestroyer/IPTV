@@ -23,23 +23,20 @@ jobs:
           node-version: 20
       - name: Build installer
         working-directory: desktop-electron
-        shell: bash
+        # Per-platform signing env (set the matching repo secrets to enable — see SIGNING.md). The mac cert is
+        # only exposed on macOS and the win cert only on Windows, so neither leaks into the other's job.
         env:
-          # macOS signing + notarization (set these repo secrets to enable):
-          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          CSC_LINK: ${{ matrix.os == 'macos-latest' && secrets.MAC_CSC_LINK || '' }}
+          CSC_KEY_PASSWORD: ${{ matrix.os == 'macos-latest' && secrets.MAC_CSC_KEY_PASSWORD || '' }}
+          WIN_CSC_LINK: ${{ matrix.os == 'windows-latest' && secrets.WIN_CSC_LINK || '' }}
+          WIN_CSC_KEY_PASSWORD: ${{ matrix.os == 'windows-latest' && secrets.WIN_CSC_KEY_PASSWORD || '' }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          # Windows signing:
-          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
-          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+          # Disable signing everywhere except macOS-with-a-cert, so unsigned builds still succeed.
+          CSC_IDENTITY_AUTO_DISCOVERY: ${{ (matrix.os == 'macos-latest' && secrets.MAC_CSC_LINK != '') && 'true' || 'false' }}
         run: |
           npm install
-          # Don't let the macOS cert env leak into the Windows job.
-          if [ "$RUNNER_OS" = "Windows" ]; then unset CSC_LINK CSC_KEY_PASSWORD; fi
-          # On macOS with no cert, disable signing so the build still produces an (unsigned) dmg.
-          if [ "$RUNNER_OS" = "macOS" ] && [ -z "$CSC_LINK" ]; then export CSC_IDENTITY_AUTO_DISCOVERY=false; fi
           npx electron-builder --publish never
       - name: Collect installers
         shell: bash
