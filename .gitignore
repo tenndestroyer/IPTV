@@ -1,0 +1,7 @@
+node_modules/
+dist/
+target/
+*.apk
+*.aab
+*.ipa
+.DS_Store

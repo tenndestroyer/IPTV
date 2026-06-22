@@ -1,0 +1,27 @@
+name: Build Android (TWA)
+on: [workflow_dispatch]
+# Produces an installable APK/AAB from the live PWA. For Play release you must provide a
+# keystore (secrets: ANDROID_KEYSTORE_B64, KEY_ALIAS, KEY_PASS, STORE_PASS) — otherwise a debug key is used.
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - name: Install Bubblewrap
+        run: npm i -g @bubblewrap/cli
+      - name: Build TWA
+        working-directory: android-twa
+        run: |
+          bubblewrap init --manifest https://kingpickz.com/iptv/manifest.json --directory . <<'EOF' || true
+EOF
+          bubblewrap build --skipPwaValidation || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aurora-android
+          path: |
+            android-twa/*.apk
+            android-twa/*.aab

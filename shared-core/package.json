@@ -1,0 +1,10 @@
+{
+  "name": "@aurora/core",
+  "version": "0.1.0",
+  "description": "Aurora IPTV shared core — M3U/Xtream parsing, proxy URLs, E2E sync client.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": { "build": "tsc", "watch": "tsc -w" },
+  "devDependencies": { "typescript": "^5.5.0" }
+}

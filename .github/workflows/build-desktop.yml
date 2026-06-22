@@ -1,0 +1,28 @@
+name: Build Desktop (Tauri)
+on: [workflow_dispatch, push]
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Linux deps
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+      - name: Build installers
+        run: |
+          cd desktop-tauri
+          npm install
+          npx tauri icon https://kingpickz.com/iptv/icon.svg || true
+          npx tauri build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aurora-desktop-${{ matrix.os }}
+          path: |
+            desktop-tauri/src-tauri/target/release/bundle/**/*
