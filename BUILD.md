@@ -1,26 +1,28 @@
-# Building Aurora native apps
+# Building KINGZ native apps
 
-The web app (kingpickz.com/iptv) already runs on every platform's browser and installs as a PWA.
-These build **native store binaries**. The included **GitHub Actions** build them in the cloud — no local Mac needed:
+The web app (kingpickz.com/iptv) runs on every browser and installs as a PWA. The repo also builds native
+binaries in the cloud — **GitHub Actions, no local machine needed for Android or desktop:**
 
-1. Push this folder to a GitHub repo.
-2. Actions → run the workflows:
-   - **Build Desktop (Tauri)** → Windows `.msi`, macOS `.dmg`, Linux `.AppImage/.deb` (matrix, automatic).
-   - **Build Android (TWA)** → installable `.apk`/`.aab` from the live PWA.
-   - **Build iOS** → compiles for the simulator (proves it builds); for the App Store, open in Xcode, set your Team, Archive.
-   - **Build shared-core** → the reusable TS package.
-3. Download the artifacts from the workflow run.
+1. Actions → run a workflow (or push a tag `v*`):
+   - **Build Desktop** (`build-desktop.yml`) → Windows `.exe`, macOS `.dmg` (Intel + Apple Silicon), Linux `.AppImage`.
+   - **Build Android APK** (`build-apk.yml`) → installable `.apk` (Android + Fire TV).
+   - **Build shared-core** (`build-core.yml`) → the reusable TS package.
+2. Installers publish to the **GitHub Release** for tag `v1.0.0`.
 
-## Signing & submission (your accounts, one-time)
-- **Google Play** ($25): provide a keystore via repo secrets (ANDROID_KEYSTORE_B64, KEY_ALIAS, KEY_PASS, STORE_PASS); upload the `.aab`.
-- **Apple App Store** ($99/yr): open `apple/` in Xcode (or `xcodegen generate`), set your Team, Archive → Distribute.
-- **Microsoft Store** ($19): submit the Tauri `.msi`.
-- **Amazon Appstore / Samsung / LG**: free; upload the APK / packaged web app.
+**iOS:** install the PWA (Safari → Share → Add to Home Screen). A native App Store build needs a Mac + an
+Apple Developer account and is out of CI scope here.
+
+## Signing & submission (your accounts — see SIGNING.md)
+Pipelines auto-sign when you add the cert secrets; otherwise they ship sideloadable (unsigned / debug-signed) builds.
+- **Google Play** ($25): add the Android keystore secrets (`ANDROID_KEYSTORE_B64`, `ANDROID_STORE_PASS`,
+  `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASS`) → CI ships a signed APK.
+- **Apple App Store** ($99/yr): needs a Mac + Xcode + your signing identity.
+- **Microsoft Store** ($19): submit the `.exe`.
+- **Amazon / Samsung / LG**: free; upload the `.apk`.
 
 ## Local build (alternative to CI)
-- Desktop: `cd desktop-tauri && npm i && npx tauri build` (needs Rust + Node + OS webview libs).
-- Android: `cd android-twa && npm i -g @bubblewrap/cli && bubblewrap init --manifest https://kingpickz.com/iptv/manifest.json && bubblewrap build`.
-- iOS/macOS: `cd apple && brew install xcodegen && xcodegen generate && open AuroraIPTV.xcodeproj` (needs a Mac + Xcode).
+- Android: `cd androidapp && gradle assembleDebug` (needs JDK 17 + Android SDK).
+- Desktop: `cd desktop-electron && npm i && npx electron-builder`.
 - Core: `cd shared-core && npm i && npm run build`.
 
 Remember the store-survival rules (ships no content, legal demo, neutral metadata) in README.md.

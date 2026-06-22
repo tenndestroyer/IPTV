@@ -32,8 +32,8 @@ The CI already **builds** the store binaries; what only you can provide is the a
 | Store | Cost | What you must provide | Then |
 |------|------|----------------------|------|
 | **Google Play** | $25 once | Upload keystore as repo secrets `ANDROID_KEYSTORE_B64`, `KEY_ALIAS`, `KEY_PASS`, `STORE_PASS` (+ a Play service-account JSON for auto-publish) | CI signs the `.aab`; upload in Play Console |
-| **Apple App Store** | $99/yr | An Apple Developer account + signing certs/provisioning. Open `apple/` in Xcode (or `xcodegen generate`), set your **Team**, Archive → Distribute | macOS CI runners can sign too if you add the cert secrets |
-| **Microsoft Store** | $19 once | A Partner Center account | Submit the Tauri `.msi` |
+| **Apple App Store** | $99/yr | A Mac + Xcode + an Apple Developer account & signing identity (native iOS is out of CI scope; the PWA covers iOS with no store) | Wrap the web app in a WKWebView project, set your **Team**, Archive → Distribute |
+| **Microsoft Store** | $19 once | A Partner Center account | Submit the `.exe` |
 | **Amazon / Samsung / LG** | free | Their developer account | Upload the `.apk` / packaged web app |
 
 Why I can't finish Tier 3 for you: creating these accounts requires your identity and a payment method,
